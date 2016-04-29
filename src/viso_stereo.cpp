@@ -138,6 +138,8 @@ vector<double> VisualOdometryStereo::estimateMotion (vector<Matcher::p_match> p_
         break;
     }
   //  tr_delta[1] = -1*yaw_init;
+// tr_delta[0]=0;
+// tr_delta[4]=0;
 
     // not converged
     if (result!=CONVERGED)
@@ -346,8 +348,9 @@ void VisualOdometryStereo::computeResidualsAndJacobian(vector<double> &tr,vector
   }
   J[(4*i)*6] = 0;
  // J[(4*i+1)*6] = 0;
+ float wz = 100;
 
-  J[(4*i)*6+1] = sin(viso_yaw_+ry);
+  J[(4*i)*6+1] = wz*sin(viso_yaw_+ry);
 //  J[(4*i+1)*6+1] = -1*cos(viso_yaw_+ry);
 
   J[(4*i)*6+2] = 0;
@@ -365,7 +368,8 @@ void VisualOdometryStereo::computeResidualsAndJacobian(vector<double> &tr,vector
   p_predict[4*i] = cos(viso_yaw_+ry);
  // p_predict[4*i+1]= sin(viso_yaw_+ry);
 
-  p_residual[4*i] = 100*(p_observe[4*i]- p_predict[4*i]);
+  p_residual[4*i] = wz*(p_observe[4*i]- p_predict[4*i]);
+ // std::cout<<"residual_error "<<p_residual[4*i]<<endl;
  // p_residual[4*i+1] =(p_observe[4*i+1]- p_predict[4*i+1]);
 }
 
