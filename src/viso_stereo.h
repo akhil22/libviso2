@@ -27,9 +27,9 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 class VisualOdometryStereo : public VisualOdometry {
 
 public:
-  double current_yaw;
-  double relative_yaw_;
-  double viso_yaw_;
+  double imu_yaw_;
+  double imu_pitch_;
+  double imu_roll_;
 
   // stereo-specific parameters (mandatory: base)
   struct parameters : public VisualOdometry::parameters {
@@ -63,7 +63,7 @@ public:
   //                     when small/no motions are observed to obtain Tr_delta wrt
   //                     an older coordinate system / time step than the previous one.
   // output: returns false if an error occured
-  bool process (uint8_t *I1,uint8_t *I2,int32_t* dims,double relative_yaw, double viso_yaw,bool replace=false);
+  bool process (uint8_t *I1,uint8_t *I2,int32_t* dims,double imu_yaw, double imu_pitch,double imu_roll,bool replace=false);
 
   using VisualOdometry::process;
 

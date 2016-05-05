@@ -22,24 +22,25 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 #include "viso_stereo.h"
 #include<iostream>
 using namespace std;
-//double relative_yaw_;
+double relative_yaw_;
 //double viso_yaw_;
 VisualOdometryStereo::VisualOdometryStereo (parameters param) : param(param), VisualOdometry(param) {
   matcher->setIntrinsics(param.calib.f,param.calib.cu,param.calib.cv,param.base);
-  current_yaw = 0;
+  //current_yaw = 0;
 }
 
 VisualOdometryStereo::~VisualOdometryStereo() {
 }
 
-bool VisualOdometryStereo::process (uint8_t *I1,uint8_t *I2,int32_t* dims,double relative_yaw, double viso_yaw,bool replace) {
+bool VisualOdometryStereo::process (uint8_t *I1,uint8_t *I2,int32_t* dims,double imu_yaw, double imu_pitch ,double imu_roll,bool replace) {
   matcher->pushBack(I1,I2,dims,replace);
   if (Tr_valid) matcher->matchFeatures(2,&Tr_delta);
   else          matcher->matchFeatures(2);
   matcher->bucketFeatures(param.bucket.max_features,param.bucket.bucket_width,param.bucket.bucket_height);                          
   p_matched = matcher->getMatches();
-  relative_yaw_ = relative_yaw;
-  viso_yaw_ = viso_yaw;
+  imu_yaw_ = imu_yaw;
+  imu_pitch_ = imu_pitch;
+  imu_roll_ = imu_roll;
   cout<<"processing"<<endl;
   return updateMotion();
 }
@@ -120,7 +121,12 @@ vector<double> VisualOdometryStereo::estimateMotion (vector<Matcher::p_match> p_
     }
   }
   //initialize yaw from imu 
-//  tr_delta[1] = yaw_init - current_yaw;
+  
+//tr_delta[0] = imu_pitch_;
+
+//tr_delta[2] = -1*imu_roll_;
+
+
   //change to zero initialization
 //  cout<<tr_delta[1]<<endl;
 // cout<<yaw_init<<endl;
@@ -138,8 +144,11 @@ vector<double> VisualOdometryStereo::estimateMotion (vector<Matcher::p_match> p_
         break;
     }
   //  tr_delta[1] = -1*yaw_init;
-// tr_delta[0]=0;
-// tr_delta[4]=0;
+
+    tr_delta[0]= imu_pitch_;
+    tr_delta[2]= -1*imu_roll_;
+// t
+// r_delta[4]=0;
 
     // not converged
     if (result!=CONVERGED)
@@ -251,7 +260,7 @@ void VisualOdometryStereo::computeObservations(vector<Matcher::p_match> &p_match
     p_observe[4*i+2] = p_matched[active[i]].u2c; // u2
     p_observe[4*i+3] = p_matched[active[i]].v2c; // v2
   }
-  p_observe[4*i] = cos(relative_yaw_);
+  p_observe[4*i] = cos(imu_yaw_*0);
 //  p_observe[4*i+1] = sin(relative_yaw_);
 }
 
@@ -350,7 +359,7 @@ void VisualOdometryStereo::computeResidualsAndJacobian(vector<double> &tr,vector
  // J[(4*i+1)*6] = 0;
  float wz = 100;
 
-  J[(4*i)*6+1] = wz*sin(viso_yaw_+ry);
+  J[(4*i)*6+1] = wz*sin(ry*0);
 //  J[(4*i+1)*6+1] = -1*cos(viso_yaw_+ry);
 
   J[(4*i)*6+2] = 0;
@@ -365,7 +374,7 @@ void VisualOdometryStereo::computeResidualsAndJacobian(vector<double> &tr,vector
   J[(4*i)*6+5] = 0;
 //  J[(4*i+1)*6+5] = 0;
 
-  p_predict[4*i] = cos(viso_yaw_+ry);
+  p_predict[4*i] = cos(ry*0);
  // p_predict[4*i+1]= sin(viso_yaw_+ry);
 
   p_residual[4*i] = wz*(p_observe[4*i]- p_predict[4*i]);
